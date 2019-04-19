@@ -1,0 +1,7 @@
+# Ignore IntelliJ (PyCharm) project folders/files
+.idea/
+venv/
+
+# Ignore test files
+*.csv
+*.tsv
