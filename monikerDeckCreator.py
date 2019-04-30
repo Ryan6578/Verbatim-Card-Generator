@@ -89,6 +89,8 @@ categoryFont = './assets/proxima-nova-soft-regular.otf'
 pointFont = './assets/proxima-nova-soft-regular.otf'
 pointTextFont = './assets/gotham-rounded-bold.otf'
 
+newFont = './assets/Roboto-Regular.ttf'
+
 sheetNumber = 1
 column = 1
 row = 1
@@ -103,7 +105,7 @@ with open(sys.argv[1], 'r', encoding='UTF-8') as data:
         if line == '':
             continue
 
-        cardDetails = line.split('|')
+        cardDetails = line.split('\t')
 
         # Make sure we have five fields
         if len(cardDetails) != 5:
@@ -116,14 +118,15 @@ with open(sys.argv[1], 'r', encoding='UTF-8') as data:
         cards.append(cardDetails)
         cardsLeft += 1
 
+# Define card parameters
+cardWidth = 600
+cardHeight = 1000
+
 # Create each card
 for cardDetails in cards:
 
     # Load new card image
-    cardImage = Image.open('./assets/card.png')
-
-    # Get the card dimensions
-    cardWidth, cardHeight = cardImage.size
+    cardImage = Image.new('RGB', (cardWidth, cardHeight), '#FFFFFF')
 
     # Create a new card sheet - if necessary
     if column == 1 and row == 1:
@@ -152,42 +155,48 @@ for cardDetails in cards:
         arcImage = Image.new('RGBA', (2400, 2400), color=(0, 0, 0, 0))
         edit = ImageDraw.Draw(arcImage, mode='RGBA')
         edit.ellipse([(200, 200), (2200, 2200)], fill=(red, green, blue, 255), width=1)
-        edit.rectangle([(200, 1000), (2200, 2200)], fill=(red, green, blue, 255), width=1)
-        arcImageResized = arcImage.resize((200, 200), resample=Image.LANCZOS)
-        finalArc = arcImageResized.crop((18, 10, 182, 180))
+        edit.rectangle([(205, 1000), (2195, 2200)], fill=(red, green, blue, 255), width=1)
+        arcImageResized = arcImage.resize((int(cardWidth * 0.3), int(cardHeight * 0.15)), resample=Image.LANCZOS)
+        finalArc = arcImageResized
+        #finalArc = arcImageResized.crop((18, 10, 182, 180))
         arc[cardDetails[4]] = finalArc
     else:
         finalArc = arc[cardDetails[4]]
     arcW, arcH = finalArc.size
-    cardImage.paste(finalArc, box=(332 - round(arcW/2), cardHeight - arcH), mask=finalArc)
+    cardImage.paste(finalArc, box=(round(cardWidth/2) - round(arcW/2), cardHeight - arcH), mask=finalArc)
 
     # Edits
     edit = ImageDraw.Draw(cardImage)
 
     # Title
-    font, title = size_text((603, 100), cardImage, cardDetails[0], './assets/proxima-nova-soft-bold.otf', 45)
+    font, title = size_text((cardWidth * 0.9, 100), cardImage, cardDetails[0], './assets/proxima-nova-soft-bold.otf', 45)
     editW, editH = edit.textsize(title, font=font)
-    edit.text((332 - (editW/2), 100 - (editH/2)), title, fill=(0, 0, 0, 255), font=font, align='center')
+    edit.text(((cardWidth/2) - (editW/2), (cardHeight * 0.1) - (editH/2)), title, fill=(0, 0, 0, 255), font=font, align='center')
 
     # Description
-    font, description = size_text((543, 100), cardImage, cardDetails[1], './assets/proxima-nova-soft-regular.otf', 30)
+    font, description = size_text((cardWidth * 0.9, 100), cardImage, cardDetails[1], './assets/Roboto-Regular.ttf', 30)
     editW, editH = edit.textsize(description, font=font)
-    edit.text((60, 300), description, fill=(0, 0, 0, 255), font=font, align='left')
+    edit.text((cardWidth * 0.05, (cardHeight * 0.25)), description, fill=(0, 0, 0, 255), font=font, align='left')
+
+    # Dots
+    font, category = size_text((cardWidth * 0.9, 100), cardImage, '············', './assets/Roboto-Bold.ttf', 50)
+    editW, editH = edit.textsize(category, font=font)
+    edit.text(((cardWidth/2) - (editW/2), (cardHeight * 0.75) - (editH/2)), category, fill=(142, 142, 142, 255), font=font, align='center')
 
     # Category
-    font, category = size_text((600, 100), cardImage, cardDetails[2], './assets/proxima-nova-soft-regular.otf', 35)
+    font, category = size_text((cardWidth * 0.9, 100), cardImage, cardDetails[2], './assets/proxima-nova-soft-regular.otf', 35)
     editW, editH = edit.textsize(category, font=font)
-    edit.text((332 - (editW/2), 778 - (editH/2)), category, fill=(red, green, blue, 255), font=font, align='center')
+    edit.text(((cardWidth/2) - (editW/2), (cardHeight * 0.80) - (editH/2)), category, fill=(red, green, blue, 255), font=font, align='center')
 
     # Point Value
     font, points = size_text((300, 100), cardImage, cardDetails[3], './assets/proxima-nova-soft-regular.otf', 55)
     editW, editH = edit.textsize(points, font=font)
-    edit.text((332 - (editW/2), 895 - (editH/2)), points, fill=(255, 255, 255, 255), font=font, align='center')
+    edit.text(((cardWidth/2) - (editW/2), 895 - (editH/2)), points, fill=(255, 255, 255, 255), font=font, align='center')
 
     # Point Text
     font, pointText = size_text((300, 100), cardImage, 'POINTS', './assets/gotham-rounded-bold.otf', 20)
     editW, editH = edit.textsize(pointText, font=font)
-    edit.text((332 - (editW/2), 945 - (editH/2)), pointText, fill=(255, 255, 255, 255), font=font, align='center')
+    edit.text(((cardWidth/2) - (editW/2), 945 - (editH/2)), pointText, fill=(255, 255, 255, 255), font=font, align='center')
 
 
     # Paste at the offset
@@ -202,7 +211,7 @@ for cardDetails in cards:
 
     if column > 10 and row == 7:
         # Save the current sheet
-        currentSheet.save(str(sheetNumber) + '.png', 'PNG', compress_level=1)
+        currentSheet.save(str(sheetNumber) + '.png', 'PNG')
 
         # Increment the sheet number
         sheetNumber += 1
